@@ -11,15 +11,17 @@ export default function Product() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
+  var baseURL = process.env.REACT_APP_API_BASE_URL;
+
   const fetchProducts = useCallback(
     async (page = currentPage, limit = rowsPerPage) => {
       try {
         const token = localStorage.getItem("token");
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        const response = await axios.get(
-          `https://reactinterviewtask.codetentaclestechnologies.tech/api/api/product-list?page=${page}&perPage=${limit}`,
-          config
-        );
+        const response = await axios.get(`${baseURL}/product-list`, {
+          ...config,
+          params: { page, perPage: limit },
+        });
         setProducts(response.data.data);
         setTotalPages(response.data.lastPage);
       } catch (err) {

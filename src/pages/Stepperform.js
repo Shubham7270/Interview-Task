@@ -16,6 +16,8 @@ const steps = [
   "Credentail Details",
 ];
 
+const baseURL = process.env.REACT_APP_API_BASE_URL;
+
 export default function Stepperform() {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -104,11 +106,7 @@ export default function Stepperform() {
         console.log(`${key}:`, value);
       }
 
-      await axios.post(
-        "https://reactinterviewtask.codetentaclestechnologies.tech/api/api/register",
-        formDataToSend,
-        config
-      );
+      await axios.post(`${baseURL}/register`, formDataToSend, config);
 
       alert("User added successfully!");
       navigate("/List");

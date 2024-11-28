@@ -8,15 +8,17 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const baseURL = process.env.REACT_APP_API_BASE_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const response = await axios.post(
-        "https://reactinterviewtask.codetentaclestechnologies.tech/api/api/login",
-        { email, password }
-      );
+      const response = await axios.post(`${baseURL}/login`, {
+        email,
+        password,
+      });
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("role", response.data.role);

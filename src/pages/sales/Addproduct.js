@@ -3,6 +3,7 @@ import Layout from "../../component/Layout";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const baseURL = process.env.REACT_APP_API_BASE_URL;
 export default function Addproduct() {
   const [formData, setFormData] = useState({
     productName: "",
@@ -40,11 +41,7 @@ export default function Addproduct() {
         },
       };
 
-      await axios.post(
-        "https://reactinterviewtask.codetentaclestechnologies.tech/api/api/add-product",
-        formDataToSend,
-        config
-      );
+      await axios.post(`${baseURL}/add-product`, formDataToSend, config);
 
       alert("Product added successfully!");
       navigate("/Product");
