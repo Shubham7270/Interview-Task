@@ -5,15 +5,14 @@ import Skillsdetails from "./stepperform/skillsdetails";
 import Credentaildetails from "./stepperform/credentaildetails";
 import { Stepper, Step, StepLabel, Button, Typography } from "@mui/material";
 import Layout from "../component/Layout";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const steps = [
   "Personal Information",
   "Details",
   "Skills Details",
-  "Credentail Details",
+  "Credential Details",
 ];
 
 const baseURL = process.env.REACT_APP_API_BASE_URL;
@@ -25,11 +24,12 @@ export default function Stepperform() {
     email: "",
     phoneNumber: "",
     country: "",
-    skills: "",
-    username: "",
+    state: "",
+    skills: [],
+    gender: "",
     password: "",
     confirmPassword: "",
-    photo: "",
+    photo: null,
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -38,135 +38,118 @@ export default function Stepperform() {
     setFormData((prevData) => ({ ...prevData, ...newData }));
   };
 
-  // const handleSubmit = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const config = {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     };
-  //     await axios.post(
-  //       "https://reactinterviewtask.codetentaclestechnologies.tech/api/api/register",
-  //       formData,
-  //       config
-  //     );
-  //     alert("User added successfully");
-  //   } catch (error) {
-  //     setError("Failed to add user.Please try again..");
-  //   }
-  // };
+  const validateStep = () => {
+    setError("");
+    switch (activeStep) {
+      case 0:
+        if (!formData.name.trim()) return "Name is required.";
 
-  const handleSubmit = async () => {
-    try {
-      if (
-        !formData.name ||
-        !formData.email ||
-        !formData.password ||
-        !formData.confirmPassword
-      ) {
-        setError("Please fill in all required fields.");
-        return;
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        setError("Passwords do not match.");
-        return;
-      }
-
-      if (!/^\d{10}$/.test(formData.phoneNumber)) {
-        setError("Phone number must be exactly 10 digits.");
-        return;
-      }
-
-      if (!formData.photo || !(formData.photo instanceof File)) {
-        setError("Please upload a valid photo.");
-        return;
-      }
-
-      const token = localStorage.getItem("token");
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      };
-
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("password", formData.password);
-      formDataToSend.append("password_confirmation", formData.confirmPassword);
-      formDataToSend.append("phoneNumber", formData.phoneNumber);
-      formDataToSend.append("gender", formData.gender);
-      formDataToSend.append("countryId", parseInt(formData.country));
-      formDataToSend.append("stateId", parseInt(formData.state));
-      formDataToSend.append("skills", formData.skills.join(","));
-      formDataToSend.append("photo", formData.photo);
-
-      for (const [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
-      }
-
-      await axios.post(`${baseURL}/register`, formDataToSend, config);
-
-      alert("User added successfully!");
-      navigate("/List");
-    } catch (error) {
-      console.error("Submission Error:", error.response?.data || error.message);
-      setError(
-        error.response?.data?.message?.join(", ") ||
-          "Failed to add user. Please check your input."
-      );
+        if (!/^\d{10}$/.test(formData.phoneNumber))
+          return "Phone number must be exactly 10 digits.";
+        return "";
+      case 1:
+        if (!formData.country) return "Country is required.";
+        if (!formData.state) return "State is required.";
+        return "";
+      case 2:
+        if (formData.skills.length === 0)
+          return "At least one skill is required.";
+        return "";
+      case 3:
+        if (!formData.email.trim()) return "Email is required.";
+        if (!/^\S+@\S+\.\S+$/.test(formData.email))
+          return "Invalid email format.";
+        if (!formData.password) return "Password is required.";
+        if (!formData.confirmPassword) return "Confirm Password is required.";
+        if (formData.password !== formData.confirmPassword)
+          return "Passwords do not match.";
+        if (!formData.photo || !(formData.photo instanceof File))
+          return "Please upload a valid photo.";
+        return "";
+      default:
+        return "";
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    const validationError = validateStep();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     if (activeStep === steps.length - 1) {
-      handleSubmit();
+      try {
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        };
+
+        const formDataToSend = new FormData();
+        formDataToSend.append("name", formData.name);
+        formDataToSend.append("email", formData.email);
+        formDataToSend.append("phoneNumber", formData.phoneNumber);
+        formDataToSend.append("gender", formData.gender);
+        formDataToSend.append("countryId", formData.country);
+        formDataToSend.append("stateId", formData.state);
+        formDataToSend.append("skills", formData.skills.join(","));
+        formDataToSend.append("password", formData.password);
+        formDataToSend.append(
+          "password_confirmation",
+          formData.confirmPassword
+        );
+        formDataToSend.append("photo", formData.photo);
+
+        await axios.post(`${baseURL}/register`, formDataToSend, config);
+
+        alert("User added successfully!");
+        navigate("/List");
+      } catch (error) {
+        console.error(
+          "Submission Error:",
+          error.response?.data || error.message
+        );
+        setError(
+          error.response?.data?.message?.join(", ") ||
+            "Failed to add user. Please check your input."
+        );
+      }
     } else {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
 
   const handleBack = () => {
+    setError("");
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
+
   const getStepContent = (step) => {
     switch (step) {
       case 0:
         return (
-          <>
-            <Personaldetails
-              formData={formData}
-              updateFormData={updateFormData}
-            />
-          </>
+          <Personaldetails
+            formData={formData}
+            updateFormData={updateFormData}
+          />
         );
       case 1:
         return (
-          <>
-            <Countrydetails
-              formData={formData}
-              updateFormData={updateFormData}
-            />
-          </>
+          <Countrydetails formData={formData} updateFormData={updateFormData} />
         );
       case 2:
         return (
-          <>
-            <Skillsdetails
-              formData={formData}
-              updateFormData={updateFormData}
-            />
-          </>
+          <Skillsdetails formData={formData} updateFormData={updateFormData} />
         );
       case 3:
         return (
-          <>
-            <Credentaildetails
-              formData={formData}
-              updateFormData={updateFormData}
-            />
-          </>
+          <Credentaildetails
+            formData={formData}
+            updateFormData={updateFormData}
+          />
         );
       default:
         return "Unknown step";
